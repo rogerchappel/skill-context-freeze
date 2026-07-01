@@ -1,0 +1,29 @@
+{
+  "name": "skill-context-freeze",
+  "version": "0.1.0",
+  "description": "Create bounded context freeze packets for agent skill runs.",
+  "type": "module",
+  "bin": {
+    "skill-context-freeze": "./bin/skill-context-freeze.js"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check-package.js",
+    "build": "node scripts/check-package.js",
+    "smoke": "node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json --json"
+  },
+  "keywords": [
+    "agent-skills",
+    "context",
+    "handoff",
+    "safety"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}
