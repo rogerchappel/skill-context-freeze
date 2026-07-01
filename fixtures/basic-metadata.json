@@ -1,0 +1,5 @@
+{
+  "allowedTools": ["node", "npm test"],
+  "approvals": ["No external account writes approved."],
+  "validation": ["npm run check"]
+}
