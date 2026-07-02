@@ -6,7 +6,7 @@
 
 ```sh
 npm install
-npm run smoke
+npm run release:check
 node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json
 ```
 
@@ -41,3 +41,10 @@ The parser is intentionally conservative and looks for common headings and check
 ## Safety Notes
 
 This package only reads local files passed on the command line. It does not call external services, send messages, mutate repos, or grant connector permissions.
+
+## Release Readiness
+
+`npm run release:check` runs the metadata check, tests, fixture-backed CLI smoke,
+and an npm package smoke that verifies the published tarball includes the CLI,
+library entry, docs, fixtures, README, license, security policy, and contributing
+guide.
