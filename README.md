@@ -10,6 +10,12 @@ npm run smoke
 node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json
 ```
 
+Run the full release-candidate gate before publishing or opening a release PR:
+
+```sh
+npm run release:check
+```
+
 ## CLI
 
 ```sh
@@ -41,3 +47,17 @@ The parser is intentionally conservative and looks for common headings and check
 ## Safety Notes
 
 This package only reads local files passed on the command line. It does not call external services, send messages, mutate repos, or grant connector permissions.
+
+## Verification
+
+```sh
+npm run check
+npm test
+npm run smoke
+npm run package:smoke
+npm run release:check
+```
+
+`npm run package:smoke` performs a dry-run npm pack and asserts that the CLI,
+library source, fixture brief, handoff example, skill instructions, changelog,
+license, and security policy are present in the tarball.
