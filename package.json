@@ -13,7 +13,9 @@
     "test": "node --test",
     "check": "node scripts/check-package.js",
     "build": "node scripts/check-package.js",
-    "smoke": "node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json --json"
+    "smoke": "node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json --json",
+    "package:smoke": "node scripts/package-smoke.mjs",
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
   },
   "keywords": [
     "agent-skills",
@@ -25,5 +27,27 @@
   "license": "MIT",
   "engines": {
     "node": ">=20"
-  }
+  },
+  "files": [
+    "bin",
+    "src",
+    "docs",
+    "examples",
+    "fixtures",
+    "scripts",
+    "SKILL.md",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/skill-context-freeze.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/skill-context-freeze/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/skill-context-freeze#readme"
 }
