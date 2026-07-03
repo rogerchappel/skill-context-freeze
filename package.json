@@ -15,7 +15,8 @@
     "build": "node scripts/check-package.js",
     "smoke": "node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json --json",
     "package:smoke": "node scripts/package-smoke.mjs",
-    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke",
+    "lint": "npm run check"
   },
   "keywords": [
     "agent-skills",
