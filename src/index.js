@@ -33,7 +33,7 @@ export function createFreezePacket(markdown, metadata = {}) {
     evidence: []
   };
 
-  packet.warnings = buildWarnings(markdown, packet);
+  packet.warnings = buildWarnings(visibleMarkdownLines(markdown), packet);
   packet.evidence = buildEvidence(packet);
   return packet;
 }
@@ -41,13 +41,14 @@ export function createFreezePacket(markdown, metadata = {}) {
 export function parseMarkdown(markdown) {
   const sections = {};
   let current = "goal";
-  for (const rawLine of markdown.split(/\r?\n/)) {
+  for (const rawLine of visibleMarkdownLines(markdown)) {
     const heading = rawLine.match(/^#{1,4}\s+(.+?)\s*$/);
     if (heading) {
       current = resolveSection(heading[1]);
-      sections[current] = sections[current] ?? [];
+      if (current) sections[current] = sections[current] ?? [];
       continue;
     }
+    if (!current) continue;
     const line = rawLine.trim();
     if (!line) continue;
     const bullet = line.match(/^(?:[-*]|\d+\.)\s+\[?[ xX]?\]?\s*(.+)$/);
@@ -92,13 +93,15 @@ function resolveSection(value) {
   for (const [key, aliases] of Object.entries(SECTION_ALIASES)) {
     if (aliases.some((alias) => normalize(alias) === normalized)) return key;
   }
-  return "constraints";
+  return null;
 }
 
-function buildWarnings(markdown, packet) {
+function buildWarnings(lines, packet) {
   const warnings = [];
   for (const risk of RISK_PATTERNS) {
-    if (risk.pattern.test(markdown)) warnings.push(`Review ${risk.label} language before execution.`);
+    if (lines.some((line) => hasAffirmativeRisk(line, risk.pattern))) {
+      warnings.push(`Review ${risk.label} language before execution.`);
+    }
   }
   if (packet.approvals.length === 0 && warnings.length > 0) {
     warnings.push("Risky side effects are mentioned but no approval evidence is listed.");
@@ -106,6 +109,36 @@ function buildWarnings(markdown, packet) {
   if (packet.validation.length === 0) warnings.push("No validation evidence listed.");
   if (packet.files.length === 0) warnings.push("No files or paths identified for context.");
   return [...new Set(warnings)];
+}
+
+function visibleMarkdownLines(markdown) {
+  const lines = [];
+  let fence = null;
+
+  for (const line of String(markdown).split(/\r?\n/)) {
+    const marker = line.match(/^[ \t]{0,3}(`{3,}|~{3,})/);
+    if (marker) {
+      const character = marker[1][0];
+      if (!fence) {
+        fence = { character, length: marker[1].length };
+      } else if (character === fence.character && marker[1].length >= fence.length) {
+        fence = null;
+      }
+      continue;
+    }
+    if (fence || /^(?: {4}|\t)/.test(line)) continue;
+    lines.push(line);
+  }
+
+  return lines;
+}
+
+function hasAffirmativeRisk(line, pattern) {
+  const clauses = line.split(/[.;]|\b(?:but|however|then)\b/i);
+  return clauses.some((clause) => {
+    if (!pattern.test(clause)) return false;
+    return !/\b(?:do\s+not|don't|never|must\s+not|should\s+not|cannot|can't|no)\b/i.test(clause);
+  });
 }
 
 function buildEvidence(packet) {
