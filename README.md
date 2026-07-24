@@ -42,7 +42,19 @@ console.log(renderMarkdown(packet));
 
 ## Limitations
 
-The parser is intentionally conservative and looks for common headings and checklist language. It does not infer hidden project policy or read external systems.
+The parser is intentionally conservative and looks for known headings and
+checklist language. Content under an unknown heading is left out of structured
+packet fields rather than treated as a constraint. Fenced code blocks and
+four-space or tab-indented code examples are ignored by both section parsing
+and warning detection.
+
+Side-effect warnings distinguish explicit prohibitions (for example, “Do not
+publish packages”) from affirmative instructions. A clause that actually asks
+to publish, deploy, message, delete, or perform another recognized side effect
+still produces a review warning, including when it follows a prohibition in
+the same sentence.
+
+The parser does not infer hidden project policy or read external systems.
 
 ## Safety Notes
 
