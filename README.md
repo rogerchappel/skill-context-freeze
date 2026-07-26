@@ -54,6 +54,13 @@ to publish, deploy, message, delete, or perform another recognized side effect
 still produces a review warning, including when it follows a prohibition in
 the same sentence.
 
+Warning analysis scans the merged `goal`, `constraints`, and `assumptions`
+fields from both Markdown and metadata because those fields can contain
+executable instructions. It deliberately excludes `nonGoals`, `files`,
+`allowedTools`, `approvals`, and `validation`: prohibitions, paths, tool names,
+approval evidence, and validation commands in those fields do not create
+side-effect warnings by themselves.
+
 The parser does not infer hidden project policy or read external systems.
 
 ## Safety Notes
