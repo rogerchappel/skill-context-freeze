@@ -19,6 +19,14 @@ const RISK_PATTERNS = [
 
 export function createFreezePacket(markdown, metadata = {}) {
   const parsed = parseMarkdown(markdown);
+  const instructionLines = uniqueList(
+    metadata.goal,
+    parsed.goal,
+    metadata.constraints,
+    parsed.constraints,
+    metadata.assumptions,
+    parsed.assumptions
+  );
   const packet = {
     source: metadata.source ?? "inline",
     goal: firstNonEmpty(metadata.goal, parsed.goal, "Unspecified"),
@@ -33,7 +41,7 @@ export function createFreezePacket(markdown, metadata = {}) {
     evidence: []
   };
 
-  packet.warnings = buildWarnings(visibleMarkdownLines(markdown), packet);
+  packet.warnings = buildWarnings(instructionLines, packet);
   packet.evidence = buildEvidence(packet);
   return packet;
 }
