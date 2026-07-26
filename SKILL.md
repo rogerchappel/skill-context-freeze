@@ -7,7 +7,7 @@ Use this skill before handing an agent run from planning to implementation, from
 ## Required Tools Or Inputs
 
 - A Markdown brief with the requested outcome and constraints.
-- Optional JSON metadata with `allowedTools`, `files`, `approvals`, and `validation`.
+- Optional JSON metadata with `goal`, `nonGoals`, `constraints`, `assumptions`, `allowedTools`, `files`, `approvals`, and `validation`.
 - Local shell access to run `skill-context-freeze freeze`.
 
 ## Side-Effect Boundaries
@@ -17,6 +17,8 @@ The skill reads only local files provided by the operator. It must not contact e
 ## Approval Requirements
 
 Explicit approval is required before including instructions for live connector writes, messages, deployment, package publishing, GitHub releases, billing changes, or destructive filesystem actions. Missing approval should be reported as a warning in the packet.
+
+Warning analysis applies to affirmative instructions merged from Markdown and metadata `goal`, `constraints`, and `assumptions`. It excludes `nonGoals`, `files`, `allowedTools`, `approvals`, and `validation`, whose prohibitions, paths, tool names, approval evidence, and commands are retained as context rather than interpreted as instructions.
 
 ## Examples
 
