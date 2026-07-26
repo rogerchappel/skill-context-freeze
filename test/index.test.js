@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createFreezePacket, parseMarkdown, renderMarkdown } from "../src/index.js";
 
 test("parses brief headings into packet fields", () => {
@@ -89,6 +92,55 @@ Do not publish the package, but deploy the documentation.
   assert.match(mixed.warnings.join("\n"), /remote write/);
 });
 
+test("warns for affirmative risks in merged instruction metadata", () => {
+  for (const [field, value, warning] of [
+    ["goal", "Send the handoff email.", "external message"],
+    ["constraints", ["Publish the package."], "remote write"],
+    ["assumptions", ["Delete the generated directory."], "destructive filesystem"]
+  ]) {
+    const packet = createFreezePacket("## Goal\nReview locally.", {
+      [field]: value,
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+
+    assert.match(packet.warnings.join("\n"), new RegExp(warning));
+    assert.match(packet.warnings.join("\n"), /no approval evidence/i);
+  }
+});
+
+test("does not treat metadata boundaries or prohibitions as instructions", () => {
+  const packet = createFreezePacket("## Goal\nReview locally.", {
+    nonGoals: ["Publish the package."],
+    constraints: ["Do not deploy or release anything."],
+    files: ["release/publish-plan.md"],
+    allowedTools: ["github-write"],
+    approvals: ["Approval to publish was recorded."],
+    validation: ["npm run release:check"]
+  });
+
+  assert.doesNotMatch(packet.warnings.join("\n"), /remote write|live connector/);
+});
+
+test("deduplicates risks found in Markdown and metadata", () => {
+  const packet = createFreezePacket(`# Goal
+Publish the package.
+## Files
+- src/index.js`, {
+    constraints: ["Deploy the package."],
+    validation: ["npm test"]
+  });
+
+  assert.equal(
+    packet.warnings.filter((warning) => warning.includes("remote write")).length,
+    1
+  );
+  assert.equal(
+    packet.warnings.filter((warning) => warning.includes("no approval evidence")).length,
+    1
+  );
+});
+
 test("basic CLI smoke omits a warning for its publish prohibition", () => {
   const output = execFileSync(process.execPath, [
     "bin/skill-context-freeze.js",
@@ -100,6 +152,30 @@ test("basic CLI smoke omits a warning for its publish prohibition", () => {
   ], { encoding: "utf8" });
   const packet = JSON.parse(output);
   assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI warns for risky metadata merged with safe Markdown", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  const metadataPath = join(directory, "metadata.json");
+  writeFileSync(briefPath, "## Goal\nReview locally.\n## Files\n- src/index.js\n");
+  writeFileSync(metadataPath, JSON.stringify({
+    constraints: ["Publish the package."],
+    validation: ["npm test"]
+  }));
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--metadata",
+    metadataPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.match(packet.warnings.join("\n"), /remote write/);
+  assert.match(packet.warnings.join("\n"), /no approval evidence/i);
 });
 
 test("renders markdown with validation evidence", () => {
