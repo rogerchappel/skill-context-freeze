@@ -109,6 +109,34 @@ test("warns for affirmative risks in merged instruction metadata", () => {
   }
 });
 
+test("does not treat approval denial or prohibition as approval evidence", () => {
+  for (const approval of [
+    "No approval has been granted.",
+    "Do not approve publishing the package."
+  ]) {
+    const packet = createFreezePacket("## Goal\nPublish the package.", {
+      approvals: [approval],
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+
+    assert.deepEqual(packet.approvals, [approval]);
+    assert.match(packet.warnings.join("\n"), /no approval evidence/i);
+    assert.doesNotMatch(packet.evidence.join("\n"), /approval evidence retained/i);
+  }
+});
+
+test("retains genuine positive approval evidence", () => {
+  const packet = createFreezePacket("## Goal\nPublish the package.", {
+    approvals: ["Approval to publish was recorded."],
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+
+  assert.doesNotMatch(packet.warnings.join("\n"), /no approval evidence/i);
+  assert.match(packet.evidence.join("\n"), /affirmative approval evidence retained/i);
+});
+
 test("does not treat metadata boundaries or prohibitions as instructions", () => {
   const packet = createFreezePacket("## Goal\nReview locally.", {
     nonGoals: ["Publish the package."],
@@ -176,6 +204,36 @@ test("CLI warns for risky metadata merged with safe Markdown", () => {
 
   assert.match(packet.warnings.join("\n"), /remote write/);
   assert.match(packet.warnings.join("\n"), /no approval evidence/i);
+});
+
+test("CLI distinguishes denied, prohibited, and positive approval metadata", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  const metadataPath = join(directory, "metadata.json");
+  writeFileSync(briefPath, "## Goal\nSend the handoff email.\n## Files\n- src/index.js\n");
+
+  for (const [approval, expectsMissingApproval] of [
+    ["No approval has been granted.", true],
+    ["Do not approve sending the email.", true],
+    ["Approval to send the email was recorded.", false]
+  ]) {
+    writeFileSync(metadataPath, JSON.stringify({
+      approvals: [approval],
+      validation: ["npm test"]
+    }));
+    const output = execFileSync(process.execPath, [
+      "bin/skill-context-freeze.js",
+      "freeze",
+      briefPath,
+      "--metadata",
+      metadataPath,
+      "--json"
+    ], { encoding: "utf8" });
+    const packet = JSON.parse(output);
+
+    assert.equal(/no approval evidence/i.test(packet.warnings.join("\n")), expectsMissingApproval);
+    assert.equal(/affirmative approval evidence retained/i.test(packet.evidence.join("\n")), !expectsMissingApproval);
+  }
 });
 
 test("renders markdown with validation evidence", () => {

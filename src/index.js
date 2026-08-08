@@ -111,7 +111,7 @@ function buildWarnings(lines, packet) {
       warnings.push(`Review ${risk.label} language before execution.`);
     }
   }
-  if (packet.approvals.length === 0 && warnings.length > 0) {
+  if (!packet.approvals.some(hasAffirmativeApproval) && warnings.length > 0) {
     warnings.push("Risky side effects are mentioned but no approval evidence is listed.");
   }
   if (packet.validation.length === 0) warnings.push("No validation evidence listed.");
@@ -149,10 +149,24 @@ function hasAffirmativeRisk(line, pattern) {
   });
 }
 
+function hasAffirmativeApproval(line) {
+  const clauses = String(line).split(/[.;]|\b(?:but|however)\b/i);
+  return clauses.some((clause) => {
+    if (/\b(?:no|not|never|without|pending)\b|\b(?:do|does|did|must|should|can(?:not|'t))\s+not\b/i.test(clause)) {
+      return false;
+    }
+    return /\b(?:approved|authorized)\b/i.test(clause)
+      || /\bapproval\b.*\b(?:granted|given|recorded|received|confirmed|documented)\b/i.test(clause)
+      || /\b(?:granted|gave|recorded|received|confirmed|documented)\b.*\bapproval\b/i.test(clause);
+  });
+}
+
 function buildEvidence(packet) {
   const evidence = ["Generated packet reviewed for scope and warnings."];
   for (const command of packet.validation) evidence.push(`Result for: ${command}`);
-  if (packet.approvals.length) evidence.push("Approval notes retained with the packet.");
+  if (packet.approvals.some(hasAffirmativeApproval)) {
+    evidence.push("Affirmative approval evidence retained with the packet.");
+  }
   return evidence;
 }
 
