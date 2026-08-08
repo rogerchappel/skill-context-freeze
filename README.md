@@ -31,6 +31,9 @@ The command reads Markdown and optional JSON metadata, then emits:
 - approval and side-effect warnings
 - validation evidence to capture
 
+`--metadata` accepts exactly one JSON file path. Omitting its value, passing an
+option in place of the path, or repeating the option exits with a diagnostic.
+
 ## Library
 
 ```js
@@ -48,11 +51,13 @@ packet fields rather than treated as a constraint. Fenced code blocks and
 four-space or tab-indented code examples are ignored by both section parsing
 and warning detection.
 
-Side-effect warnings distinguish explicit prohibitions (for example, “Do not
-publish packages”) from affirmative instructions. A clause that actually asks
-to publish, deploy, message, delete, or perform another recognized side effect
-still produces a review warning, including when it follows a prohibition in
-the same sentence.
+Side-effect warnings recognize common base, past-tense, participle, and
+continuous forms of supported messaging, remote-write, filesystem, and live-
+connector actions. They distinguish explicit prohibitions (for example, “Do
+not publish packages” or “Publishing packages is prohibited”) from affirmative
+instructions. A clause that actually asks for a recognized side effect still
+produces a review warning, including when it follows a prohibition in the same
+sentence.
 
 Warning analysis scans the merged `goal`, `constraints`, and `assumptions`
 fields from both Markdown and metadata because those fields can contain
