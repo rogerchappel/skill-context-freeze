@@ -27,7 +27,14 @@ function parseArgs(args) {
     if (arg === "--json") {
       options.json = true;
     } else if (arg === "--metadata") {
-      options.metadata = args[index + 1];
+      if (options.metadata !== undefined) {
+        throw new Error("--metadata may only be specified once");
+      }
+      const value = args[index + 1];
+      if (!value || value.startsWith("-")) {
+        throw new Error("--metadata requires exactly one path");
+      }
+      options.metadata = value;
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${arg}`);

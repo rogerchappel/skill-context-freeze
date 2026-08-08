@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -89,6 +89,46 @@ Publish the package.
 Do not publish the package, but deploy the documentation.
 ## Files
 - src/index.js`, { validation: ["npm test"] });
+  assert.match(mixed.warnings.join("\n"), /remote write/);
+});
+
+test("recognizes common grammatical forms for every action risk category", () => {
+  for (const [instruction, warning] of [
+    ["Send the update.", "external message"],
+    ["The update was sent.", "external message"],
+    ["Publishing the package is required.", "remote write"],
+    ["Deployed the site.", "remote write"],
+    ["Delete the cache.", "destructive filesystem"],
+    ["Removing the generated directory is required.", "destructive filesystem"],
+    ["Create a GitHub record.", "live connector"],
+    ["The Slack record was updated.", "live connector"]
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+    assert.match(packet.warnings.join("\n"), new RegExp(warning), instruction);
+  }
+});
+
+test("keeps inflected prohibitions safe and detects mixed affirmative clauses", () => {
+  for (const instruction of [
+    "Publishing packages is prohibited.",
+    "The site mustn't be deployed.",
+    "Never remove generated directories.",
+    "Creating GitHub records is forbidden."
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+    assert.doesNotMatch(packet.warnings.join("\n"), /external message|remote write|destructive filesystem|live connector/, instruction);
+  }
+
+  const mixed = createFreezePacket("## Goal\nPublishing packages is prohibited, but the site was deployed.", {
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
   assert.match(mixed.warnings.join("\n"), /remote write/);
 });
 
@@ -233,6 +273,20 @@ test("CLI distinguishes denied, prohibited, and positive approval metadata", () 
 
     assert.equal(/no approval evidence/i.test(packet.warnings.join("\n")), expectsMissingApproval);
     assert.equal(/affirmative approval evidence retained/i.test(packet.evidence.join("\n")), !expectsMissingApproval);
+  }
+});
+
+test("CLI requires one non-option metadata path", () => {
+  for (const [args, diagnostic] of [
+    [["freeze", "fixtures/basic-brief.md", "--metadata"], /--metadata requires exactly one path/],
+    [["freeze", "fixtures/basic-brief.md", "--metadata", "--json"], /--metadata requires exactly one path/],
+    [["freeze", "fixtures/basic-brief.md", "--metadata", "fixtures/basic-metadata.json", "--metadata", "fixtures/basic-metadata.json"], /--metadata may only be specified once/],
+    [["freeze", "fixtures/basic-brief.md", "--metadata", "fixtures/basic-metadata.json", "extra.json"], /Unknown argument: extra\.json/]
+  ]) {
+    const result = spawnSync(process.execPath, ["bin/skill-context-freeze.js", ...args], { encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, diagnostic);
+    assert.equal(result.stdout, "");
   }
 });
 

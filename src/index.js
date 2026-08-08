@@ -10,10 +10,10 @@ const SECTION_ALIASES = {
 };
 
 const RISK_PATTERNS = [
-  { label: "external message", pattern: /\b(send|message|email|notify)\b/i },
-  { label: "remote write", pattern: /\b(push|publish|deploy|release|merge)\b/i },
-  { label: "destructive filesystem", pattern: /\brm\s+-rf\b|\bdelete\b/i },
-  { label: "live connector", pattern: /\b(connector|crm|slack|github|jira|linear)\b.*\b(write|create|update)\b/i },
+  { label: "external message", pattern: /\b(?:send(?:s|ing)?|sent|messag(?:e|es|ed|ing)|email(?:s|ed|ing)?|notif(?:y|ies|ied|ying))\b/i },
+  { label: "remote write", pattern: /\b(?:push(?:es|ed|ing)?|publish(?:es|ed|ing)?|deploy(?:s|ed|ing)?|releas(?:e|es|ed|ing)|merg(?:e|es|ed|ing))\b/i },
+  { label: "destructive filesystem", pattern: /\brm\s+-rf\b|\b(?:delet(?:e|es|ed|ing)|remov(?:e|es|ed|ing))\b/i },
+  { label: "live connector", pattern: /(?:\b(?:connector|crm|slack|github|jira|linear)\b.*\b(?:writ(?:e|es|ten|ing)|creat(?:e|es|ed|ing)|updat(?:e|es|ed|ing))\b|\b(?:writ(?:e|es|ten|ing)|creat(?:e|es|ed|ing)|updat(?:e|es|ed|ing))\b.*\b(?:connector|crm|slack|github|jira|linear)\b)/i },
   { label: "secret-like token", pattern: /\b(?:gho|sk|xoxb|pat)_[A-Za-z0-9_=-]{12,}\b/ }
 ];
 
@@ -145,7 +145,8 @@ function hasAffirmativeRisk(line, pattern) {
   const clauses = line.split(/[.;]|\b(?:but|however|then)\b/i);
   return clauses.some((clause) => {
     if (!pattern.test(clause)) return false;
-    return !/\b(?:do\s+not|don't|never|must\s+not|should\s+not|cannot|can't|no)\b/i.test(clause);
+    return !/\b(?:do\s+not|don't|never|must(?:\s+not|n't)|should(?:\s+not|n't)|cannot|can't|no)\b/i.test(clause)
+      && !/\b(?:prohibited|forbidden|disallowed)\b/i.test(clause);
   });
 }
 
