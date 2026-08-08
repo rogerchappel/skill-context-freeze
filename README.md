@@ -61,6 +61,12 @@ executable instructions. It deliberately excludes `nonGoals`, `files`,
 approval evidence, and validation commands in those fields do not create
 side-effect warnings by themselves.
 
+An `approvals` entry counts as evidence only when it affirmatively records an
+approval or authorization. Denials, missing or pending approval notes, and
+prohibitions such as “No approval has been granted” or “Do not approve
+publishing” remain visible in the packet but do not suppress the missing-
+approval warning for an affirmative risky instruction.
+
 The parser does not infer hidden project policy or read external systems.
 
 ## Safety Notes
