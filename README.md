@@ -45,8 +45,9 @@ console.log(renderMarkdown(packet));
 
 ## Limitations
 
-The parser is intentionally conservative and looks for known headings and
-checklist language. Content under an unknown heading is left out of structured
+The parser is intentionally conservative and looks for known ATX headings at
+levels 1 through 6 and checklist language. Fenced and indented code examples
+are ignored. Content under an unknown heading is left out of structured
 packet fields rather than treated as a constraint. Fenced code blocks and
 four-space or tab-indented code examples are ignored by both section parsing
 and warning detection.

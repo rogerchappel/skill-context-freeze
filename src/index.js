@@ -50,7 +50,7 @@ export function parseMarkdown(markdown) {
   const sections = {};
   let current = "goal";
   for (const rawLine of visibleMarkdownLines(markdown)) {
-    const heading = rawLine.match(/^#{1,4}\s+(.+?)\s*$/);
+    const heading = rawLine.match(/^#{1,6}\s+(.+?)\s*$/);
     if (heading) {
       current = resolveSection(heading[1]);
       if (current) sections[current] = sections[current] ?? [];

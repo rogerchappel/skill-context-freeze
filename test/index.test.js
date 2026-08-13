@@ -12,6 +12,49 @@ test("parses brief headings into packet fields", () => {
   assert.deepEqual(parsed.validation, ["npm test"]);
 });
 
+test("parses level-five and level-six headings for every section alias", () => {
+  const aliases = {
+    goal: ["goal", "goals", "objective", "request"],
+    nonGoals: ["non-goals", "non goals", "out of scope"],
+    constraints: ["constraints", "requirements", "rules"],
+    assumptions: ["assumptions"],
+    files: ["files", "paths", "context files"],
+    validation: ["validation", "verification", "tests"],
+    approvals: ["approvals", "approval requirements"],
+    tools: ["tools", "allowed tools"]
+  };
+
+  for (const [field, headings] of Object.entries(aliases)) {
+    for (const [index, heading] of headings.entries()) {
+      const level = index % 2 === 0 ? "#####" : "######";
+      const value = `${field}-${index}`;
+      const parsed = parseMarkdown(`${level} ${heading}\n- ${value}`);
+      assert.deepEqual(parsed[field], [value], `${level} ${heading}`);
+      if (field !== "goal") assert.deepEqual(parsed.goal, [], `${level} ${heading} leaked into goal`);
+    }
+  }
+});
+
+test("applies Markdown visibility rules to level-five and level-six headings", () => {
+  const parsed = parseMarkdown(`# Goal
+Review the brief.
+
+\`\`\`md
+##### Constraints
+- Hidden fenced constraint.
+\`\`\`
+
+    ###### Validation
+    - Hidden indented validation.
+
+###### Tests
+- npm test`);
+
+  assert.deepEqual(parsed.goal, ["Review the brief."]);
+  assert.deepEqual(parsed.constraints, []);
+  assert.deepEqual(parsed.validation, ["npm test"]);
+});
+
 test("merges metadata and warns on risky side effects", () => {
   const packet = createFreezePacket("## Goal\nSend a Slack update\n", {
     files: ["README.md"],
