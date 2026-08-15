@@ -142,7 +142,7 @@ function visibleMarkdownLines(markdown) {
 }
 
 function hasAffirmativeRisk(line, pattern) {
-  const clauses = line.split(/[.;]|\b(?:but|however|then)\b/i);
+  const clauses = line.split(/[.,;]|\b(?:but|however|then|yet)\b/i);
   return clauses.some((clause) => {
     if (!pattern.test(clause)) return false;
     return !/\b(?:do\s+not|don't|never|must(?:\s+not|n't)|should(?:\s+not|n't)|cannot|can't|no)\b/i.test(clause)
