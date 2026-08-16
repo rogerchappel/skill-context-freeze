@@ -207,6 +207,35 @@ test("keeps inflected prohibitions safe and detects mixed affirmative clauses", 
   assert.match(mixed.warnings.join("\n"), /remote write/);
 });
 
+test("detects affirmative side effects after comma and conjunction clause boundaries", () => {
+  for (const instruction of [
+    "Do not publish the package, deploy the documentation.",
+    "Do not publish the package, and deploy the documentation.",
+    "Do not publish the package yet deploy the documentation."
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+
+    assert.match(packet.warnings.join("\n"), /remote write/, instruction);
+  }
+});
+
+test("keeps coordinated side effects inside a pure prohibition", () => {
+  for (const instruction of [
+    "Do not publish packages or tag releases.",
+    "Never deploy the site and release the package."
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+
+    assert.doesNotMatch(packet.warnings.join("\n"), /remote write/, instruction);
+  }
+});
+
 test("warns for affirmative risks in merged instruction metadata", () => {
   for (const [field, value, warning] of [
     ["goal", "Send the handoff email.", "external message"],
@@ -340,6 +369,29 @@ test("CLI warns for risky metadata merged with safe Markdown", () => {
     briefPath,
     "--metadata",
     metadataPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.match(packet.warnings.join("\n"), /remote write/);
+  assert.match(packet.warnings.join("\n"), /no approval evidence/i);
+});
+
+test("CLI warns for an affirmative side effect after a prohibited clause", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `## Goal
+Do not publish the package, and deploy the documentation.
+## Files
+- src/index.js
+## Validation
+- npm test
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
     "--json"
   ], { encoding: "utf8" });
   const packet = JSON.parse(output);
