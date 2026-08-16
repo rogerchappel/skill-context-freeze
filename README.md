@@ -46,9 +46,11 @@ console.log(renderMarkdown(packet));
 ## Limitations
 
 The parser is intentionally conservative and looks for known ATX headings at
-levels 1 through 6 and checklist language. Fenced and indented code examples
-are ignored. Content under an unknown heading is left out of structured
-packet fields rather than treated as a constraint. Fenced code blocks and
+levels 1 through 6 and checklist language. Following CommonMark, ATX headings
+may have zero to three leading spaces; headings with four leading spaces or a
+leading tab are treated as indented code and ignored. Content under an unknown
+heading is left out of structured packet fields rather than treated as a
+constraint. Fenced code blocks and
 four-space or tab-indented code examples are ignored by both section parsing
 and warning detection.
 
