@@ -12,6 +12,38 @@ test("parses brief headings into packet fields", () => {
   assert.deepEqual(parsed.validation, ["npm test"]);
 });
 
+test("parses ATX headings indented by up to three spaces", () => {
+  for (const indentation of [" ", "  ", "   "]) {
+    const parsed = parseMarkdown(`${indentation}# Goal
+Ship the change.
+${indentation}## Files
+- src/index.js
+${indentation}###### Validation
+- npm test`);
+
+    assert.deepEqual(parsed.goal, ["Ship the change."], `${indentation.length}-space goal`);
+    assert.deepEqual(parsed.files, ["src/index.js"], `${indentation.length}-space files`);
+    assert.deepEqual(parsed.validation, ["npm test"], `${indentation.length}-space validation`);
+  }
+});
+
+test("ignores ATX headings at the four-space code boundary", () => {
+  const parsed = parseMarkdown(`# Goal
+Review the brief.
+
+    ## Files
+    - hidden.js
+	## Validation
+	- npm run hidden
+
+## Files
+- src/index.js`);
+
+  assert.deepEqual(parsed.goal, ["Review the brief."]);
+  assert.deepEqual(parsed.files, ["src/index.js"]);
+  assert.deepEqual(parsed.validation, []);
+});
+
 test("parses level-five and level-six headings for every section alias", () => {
   const aliases = {
     goal: ["goal", "goals", "objective", "request"],
@@ -263,6 +295,33 @@ test("basic CLI smoke omits a warning for its publish prohibition", () => {
   ], { encoding: "utf8" });
   const packet = JSON.parse(output);
   assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI accepts one- to three-space ATX indentation and ignores four-space examples", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, ` # Goal
+Ship the CLI fix.
+  ## Files
+- bin/skill-context-freeze.js
+   ## Validation
+- npm run release:check
+
+    ## Files
+    - hidden-example.js
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.equal(packet.goal, "Ship the CLI fix.");
+  assert.deepEqual(packet.files, ["bin/skill-context-freeze.js"]);
+  assert.deepEqual(packet.validation, ["npm run release:check"]);
 });
 
 test("CLI warns for risky metadata merged with safe Markdown", () => {
