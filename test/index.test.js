@@ -288,7 +288,7 @@ test("requires approval evidence to match each detected side-effect family", () 
     validation: ["npm test"]
   });
 
-  assert.match(unrelated.warnings.join("\n"), /no matching approval evidence/i);
+  assert.match(unrelated.warnings.join("\n"), /no approval evidence matching/i);
   assert.doesNotMatch(unrelated.evidence.join("\n"), /approval evidence retained/i);
 
   const mixed = createFreezePacket("## Goal\nDeploy the app and send the handoff email.", {
@@ -297,9 +297,9 @@ test("requires approval evidence to match each detected side-effect family", () 
     validation: ["npm test"]
   });
 
-  assert.match(mixed.warnings.join("\n"), /external message.*no matching approval evidence/i);
-  assert.doesNotMatch(mixed.warnings.join("\n"), /remote write.*no matching approval evidence/i);
-  assert.match(mixed.evidence.join("\n"), /remote write approval evidence retained/i);
+  assert.match(mixed.warnings.join("\n"), /external message.*no approval evidence matching/i);
+  assert.doesNotMatch(mixed.warnings.join("\n"), /remote write.*no approval evidence matching/i);
+  assert.match(mixed.evidence.join("\n"), /approval evidence retained for remote write/i);
 });
 
 test("does not accept denied or generic broad approval for a detected risk", () => {
@@ -314,7 +314,7 @@ test("does not accept denied or generic broad approval for a detected risk", () 
       validation: ["npm test"]
     });
 
-    assert.match(packet.warnings.join("\n"), /no matching approval evidence/i, approval);
+    assert.match(packet.warnings.join("\n"), /no approval evidence matching/i, approval);
     assert.doesNotMatch(packet.evidence.join("\n"), /approval evidence retained/i, approval);
   }
 });
@@ -342,7 +342,7 @@ Publish the package.
   });
 
   assert.equal(
-    packet.warnings.filter((warning) => warning.includes("remote write")).length,
+    packet.warnings.filter((warning) => warning === "Review remote write language before execution.").length,
     1
   );
   assert.equal(
@@ -488,8 +488,8 @@ test("CLI requires approvals to match detected side effects", () => {
   ], { encoding: "utf8" });
   const packet = JSON.parse(output);
 
-  assert.match(packet.warnings.join("\n"), /external message.*no matching approval evidence/i);
-  assert.match(packet.evidence.join("\n"), /remote write approval evidence retained/i);
+  assert.match(packet.warnings.join("\n"), /external message.*no approval evidence matching/i);
+  assert.match(packet.evidence.join("\n"), /approval evidence retained for remote write/i);
 });
 
 test("CLI requires one non-option metadata path", () => {

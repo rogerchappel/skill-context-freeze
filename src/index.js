@@ -106,13 +106,11 @@ function resolveSection(value) {
 
 function buildWarnings(lines, packet) {
   const warnings = [];
-  for (const risk of RISK_PATTERNS) {
-    if (lines.some((line) => hasAffirmativeRisk(line, risk.pattern))) {
-      warnings.push(`Review ${risk.label} language before execution.`);
+  for (const risk of detectedRisks(lines)) {
+    warnings.push(`Review ${risk.label} language before execution.`);
+    if (!packet.approvals.some((approval) => approvalMatchesRisk(approval, risk))) {
+      warnings.push(`Risky ${risk.label} side effects are mentioned but no approval evidence matching this risk is listed.`);
     }
-  }
-  if (!packet.approvals.some(hasAffirmativeApproval) && warnings.length > 0) {
-    warnings.push("Risky side effects are mentioned but no approval evidence is listed.");
   }
   if (packet.validation.length === 0) warnings.push("No validation evidence listed.");
   if (packet.files.length === 0) warnings.push("No files or paths identified for context.");
@@ -162,11 +160,22 @@ function hasAffirmativeApproval(line) {
   });
 }
 
+function detectedRisks(lines) {
+  return RISK_PATTERNS.filter((risk) => lines.some((line) => hasAffirmativeRisk(line, risk.pattern)));
+}
+
+function approvalMatchesRisk(approval, risk) {
+  return hasAffirmativeApproval(approval) && risk.pattern.test(String(approval));
+}
+
 function buildEvidence(packet) {
   const evidence = ["Generated packet reviewed for scope and warnings."];
   for (const command of packet.validation) evidence.push(`Result for: ${command}`);
-  if (packet.approvals.some(hasAffirmativeApproval)) {
-    evidence.push("Affirmative approval evidence retained with the packet.");
+  const instructionLines = uniqueList(packet.goal, packet.constraints, packet.assumptions);
+  for (const risk of detectedRisks(instructionLines)) {
+    if (packet.approvals.some((approval) => approvalMatchesRisk(approval, risk))) {
+      evidence.push(`Affirmative approval evidence retained for ${risk.label} with the packet.`);
+    }
   }
   return evidence;
 }
