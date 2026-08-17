@@ -75,6 +75,13 @@ prohibitions such as “No approval has been granted” or “Do not approve
 publishing” remain visible in the packet but do not suppress the missing-
 approval warning for an affirmative risky instruction.
 
+Approval evidence must also name an action in the same detected side-effect
+family. For example, approval to send an email covers an external-message risk
+but does not cover deployment or publishing. When instructions contain more
+than one risk family, each family needs its own matching approval; unrelated or
+generic statements such as “all actions are approved” are retained as context
+but do not suppress warnings or count as sufficient evidence.
+
 The parser does not infer hidden project policy or read external systems.
 
 ## Safety Notes

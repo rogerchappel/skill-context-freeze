@@ -18,6 +18,8 @@ The skill reads only local files provided by the operator. It must not contact e
 
 Explicit approval is required before including instructions for live connector writes, messages, deployment, package publishing, GitHub releases, billing changes, or destructive filesystem actions. Missing approval should be reported as a warning in the packet.
 
+Approval evidence must affirmatively name an action in the same side-effect family as the instruction. Approval for messaging does not cover deployment, for example, and generic or broad approval language does not satisfy a detected risk. If a packet contains multiple risk families, match approval evidence independently to each family and warn for every unmatched family.
+
 Warning analysis applies to affirmative instructions merged from Markdown and metadata `goal`, `constraints`, and `assumptions`. It excludes `nonGoals`, `files`, `allowedTools`, `approvals`, and `validation`, whose prohibitions, paths, tool names, approval evidence, and commands are retained as context rather than interpreted as instructions.
 
 ## Examples
