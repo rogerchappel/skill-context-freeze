@@ -281,6 +281,44 @@ test("retains genuine positive approval evidence", () => {
   assert.match(packet.evidence.join("\n"), /affirmative approval evidence retained/i);
 });
 
+test("requires approval evidence to match each detected side-effect family", () => {
+  const unrelated = createFreezePacket("## Goal\nDeploy the app.", {
+    approvals: ["Approval to send the email was recorded."],
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+
+  assert.match(unrelated.warnings.join("\n"), /no matching approval evidence/i);
+  assert.doesNotMatch(unrelated.evidence.join("\n"), /approval evidence retained/i);
+
+  const mixed = createFreezePacket("## Goal\nDeploy the app and send the handoff email.", {
+    approvals: ["Approval to deploy the app was recorded."],
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+
+  assert.match(mixed.warnings.join("\n"), /external message.*no matching approval evidence/i);
+  assert.doesNotMatch(mixed.warnings.join("\n"), /remote write.*no matching approval evidence/i);
+  assert.match(mixed.evidence.join("\n"), /remote write approval evidence retained/i);
+});
+
+test("does not accept denied or generic broad approval for a detected risk", () => {
+  for (const approval of [
+    "Approval to deploy was denied.",
+    "All actions are approved.",
+    "Broad approval was recorded for this work."
+  ]) {
+    const packet = createFreezePacket("## Goal\nDeploy the app.", {
+      approvals: [approval],
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+
+    assert.match(packet.warnings.join("\n"), /no matching approval evidence/i, approval);
+    assert.doesNotMatch(packet.evidence.join("\n"), /approval evidence retained/i, approval);
+  }
+});
+
 test("does not treat metadata boundaries or prohibitions as instructions", () => {
   const packet = createFreezePacket("## Goal\nReview locally.", {
     nonGoals: ["Publish the package."],
@@ -428,6 +466,30 @@ test("CLI distinguishes denied, prohibited, and positive approval metadata", () 
     assert.equal(/no approval evidence/i.test(packet.warnings.join("\n")), expectsMissingApproval);
     assert.equal(/affirmative approval evidence retained/i.test(packet.evidence.join("\n")), !expectsMissingApproval);
   }
+});
+
+test("CLI requires approvals to match detected side effects", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  const metadataPath = join(directory, "metadata.json");
+  writeFileSync(briefPath, "## Goal\nDeploy the app and send the handoff email.\n## Files\n- src/index.js\n");
+  writeFileSync(metadataPath, JSON.stringify({
+    approvals: ["Approval to deploy the app was recorded."],
+    validation: ["npm test"]
+  }));
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--metadata",
+    metadataPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.match(packet.warnings.join("\n"), /external message.*no matching approval evidence/i);
+  assert.match(packet.evidence.join("\n"), /remote write approval evidence retained/i);
 });
 
 test("CLI requires one non-option metadata path", () => {
