@@ -189,6 +189,9 @@ test("recognizes common grammatical forms for every action risk category", () =>
 test("keeps inflected prohibitions safe and detects mixed affirmative clauses", () => {
   for (const instruction of [
     "Publishing packages is prohibited.",
+    "Publishing packages is not allowed.",
+    "Publishing packages is not permitted.",
+    "Releases are not allowed.",
     "The site mustn't be deployed.",
     "Never remove generated directories.",
     "Creating GitHub records is forbidden."
@@ -205,6 +208,12 @@ test("keeps inflected prohibitions safe and detects mixed affirmative clauses", 
     validation: ["npm test"]
   });
   assert.match(mixed.warnings.join("\n"), /remote write/);
+
+  const passiveMixed = createFreezePacket("## Goal\nPublishing packages is not allowed, but the site was deployed.", {
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+  assert.match(passiveMixed.warnings.join("\n"), /remote write/);
 });
 
 test("detects affirmative side effects after comma and conjunction clause boundaries", () => {
@@ -361,6 +370,28 @@ test("basic CLI smoke omits a warning for its publish prohibition", () => {
     "--json"
   ], { encoding: "utf8" });
   const packet = JSON.parse(output);
+  assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI treats passive publishing prohibitions as non-affirmative", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `## Goal
+Publishing packages is not permitted.
+## Files
+- src/index.js
+## Validation
+- npm test
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
   assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
 });
 
