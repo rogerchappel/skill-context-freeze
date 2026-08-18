@@ -57,7 +57,8 @@ and warning detection.
 Side-effect warnings recognize common base, past-tense, participle, and
 continuous forms of supported messaging, remote-write, filesystem, and live-
 connector actions. They distinguish explicit prohibitions (for example, “Do
-not publish packages” or “Publishing packages is prohibited”) from affirmative
+not publish packages”, “Publishing packages is prohibited”, or “Publishing
+packages is not allowed/permitted”) from affirmative
 instructions. A clause that actually asks for a recognized side effect still
 produces a review warning, including when it follows a prohibition in the same
 sentence.
