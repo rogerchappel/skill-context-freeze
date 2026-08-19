@@ -84,6 +84,10 @@ generic statements such as “all actions are approved” are retained as contex
 but do not suppress warnings or count as sufficient evidence.
 
 The parser does not infer hidden project policy or read external systems.
+Fenced code blocks follow CommonMark opener rules: a backtick fence whose info
+string contains a backtick is not a fence and remains visible instruction text.
+Valid backtick fences and tilde fences (whose info strings may contain
+backticks) are ignored as examples.
 
 ## Safety Notes
 
