@@ -122,15 +122,16 @@ function visibleMarkdownLines(markdown) {
   let fence = null;
 
   for (const line of String(markdown).split(/\r?\n/)) {
-    const marker = line.match(/^[ \t]{0,3}(`{3,}|~{3,})/);
+    const marker = line.match(/^[ \t]{0,3}(`{3,}|~{3,})(.*)$/);
     if (marker) {
       const character = marker[1][0];
       if (!fence) {
-        fence = { character, length: marker[1].length };
+        const validOpener = character === "~" || !marker[2].includes("`");
+        if (validOpener) fence = { character, length: marker[1].length };
       } else if (character === fence.character && marker[1].length >= fence.length) {
         fence = null;
       }
-      continue;
+      if (fence || !marker[2].includes("`")) continue;
     }
     if (fence || /^(?: {4}|\t)/.test(line)) continue;
     lines.push(line);

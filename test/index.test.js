@@ -131,6 +131,45 @@ Publish a release.
   assert.doesNotMatch(packet.warnings.join("\n"), /remote write|external message/);
 });
 
+test("treats a backtick fence with a backtick in its info string as visible Markdown", () => {
+  const markdown = `# Goal
+Review the brief.
+
+\`\`\`bad\`info
+## Constraints
+- Publish packages.
+`;
+  const parsed = parseMarkdown(markdown);
+  const packet = createFreezePacket(markdown);
+
+  assert.deepEqual(parsed.constraints, ["Publish packages."]);
+  assert.ok(packet.warnings.includes("Review remote write language before execution."));
+});
+
+test("continues to ignore valid backtick and tilde fenced examples", () => {
+  const markdown = `# Goal
+Review the brief.
+
+\`\`\`md
+## Constraints
+- Publish hidden backtick packages.
+\`\`\`
+
+~~~md\`variant
+## Constraints
+- Publish hidden tilde packages.
+~~~
+
+## Constraints
+- Keep verification manual.
+`;
+  const parsed = parseMarkdown(markdown);
+  const packet = createFreezePacket(markdown);
+
+  assert.deepEqual(parsed.constraints, ["Keep verification manual."]);
+  assert.ok(!packet.warnings.includes("Review remote write language before execution."));
+});
+
 test("does not map unknown headings into constraints", () => {
   const parsed = parseMarkdown(`# Goal
 Review context.
@@ -420,6 +459,29 @@ Ship the CLI fix.
   assert.equal(packet.goal, "Ship the CLI fix.");
   assert.deepEqual(packet.files, ["bin/skill-context-freeze.js"]);
   assert.deepEqual(packet.validation, ["npm run release:check"]);
+});
+
+test("CLI keeps instructions after an invalid backtick fence opener visible", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `# Goal
+Review the brief.
+
+\`\`\`bad\`info
+## Constraints
+- Publish packages.
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.deepEqual(packet.constraints, ["Publish packages."]);
+  assert.ok(packet.warnings.includes("Review remote write language before execution."));
 });
 
 test("CLI warns for risky metadata merged with safe Markdown", () => {
