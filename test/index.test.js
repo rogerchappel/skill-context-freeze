@@ -255,6 +255,33 @@ test("keeps inflected prohibitions safe and detects mixed affirmative clauses", 
   assert.match(passiveMixed.warnings.join("\n"), /remote write/);
 });
 
+test("treats contracted passive prohibitions as non-affirmative for every action risk category", () => {
+  for (const instruction of [
+    "Sending the update isn't allowed.",
+    "Publishing the package isn't permitted.",
+    "Generated directories aren't allowed to be deleted.",
+    "Creating a GitHub record isn't permitted."
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+    assert.doesNotMatch(packet.warnings.join("\n"), /external message|remote write|destructive filesystem|live connector/, instruction);
+  }
+
+  const affirmative = createFreezePacket("## Goal\nPublishing the package is permitted.", {
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+  assert.match(affirmative.warnings.join("\n"), /remote write/);
+
+  const mixed = createFreezePacket("## Goal\nPublishing isn't allowed, but deploy the documentation.", {
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+  assert.match(mixed.warnings.join("\n"), /remote write/);
+});
+
 test("detects affirmative side effects after comma and conjunction clause boundaries", () => {
   for (const instruction of [
     "Do not publish the package, deploy the documentation.",
@@ -417,6 +444,28 @@ test("CLI treats passive publishing prohibitions as non-affirmative", () => {
   const briefPath = join(directory, "brief.md");
   writeFileSync(briefPath, `## Goal
 Publishing packages is not permitted.
+## Files
+- src/index.js
+## Validation
+- npm test
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI treats contracted passive publishing prohibitions as non-affirmative", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `## Goal
+Publishing the package isn't permitted.
 ## Files
 - src/index.js
 ## Validation

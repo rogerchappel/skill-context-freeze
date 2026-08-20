@@ -146,7 +146,7 @@ function hasAffirmativeRisk(line, pattern) {
     if (!pattern.test(clause)) return false;
     return !/\b(?:do\s+not|don't|never|must(?:\s+not|n't)|should(?:\s+not|n't)|cannot|can't|no)\b/i.test(clause)
       && !/\b(?:prohibited|forbidden|disallowed)\b/i.test(clause)
-      && !/\b(?:is|are|was|were|be|being|been)\s+(?:not|n't)\s+(?:allowed|permitted)\b/i.test(clause);
+      && !/\b(?:(?:is|are|was|were|be|being|been)\s+not|(?:is|are|was|were)n['’]t)\s+(?:allowed|permitted)\b/i.test(clause);
   });
 }
 
