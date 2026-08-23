@@ -282,6 +282,31 @@ test("treats contracted passive prohibitions as non-affirmative for every action
   assert.match(mixed.warnings.join("\n"), /remote write/);
 });
 
+test("treats active and passive modal prohibitions as non-affirmative for every action risk category", () => {
+  for (const instruction of [
+    "You may not send the update.",
+    "The update may not be sent.",
+    "You may not publish the package.",
+    "The package may not be published.",
+    "You may not delete generated directories.",
+    "Generated directories may not be deleted.",
+    "You may not create a GitHub record.",
+    "A GitHub record may not be created."
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+    assert.doesNotMatch(packet.warnings.join("\n"), /external message|remote write|destructive filesystem|live connector/, instruction);
+  }
+
+  const mixed = createFreezePacket("## Goal\nThe package may not be published, but deploy the documentation.", {
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+  assert.match(mixed.warnings.join("\n"), /remote write/);
+});
+
 test("detects affirmative side effects after comma and conjunction clause boundaries", () => {
   for (const instruction of [
     "Do not publish the package, deploy the documentation.",
@@ -466,6 +491,28 @@ test("CLI treats contracted passive publishing prohibitions as non-affirmative",
   const briefPath = join(directory, "brief.md");
   writeFileSync(briefPath, `## Goal
 Publishing the package isn't permitted.
+## Files
+- src/index.js
+## Validation
+- npm test
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js",
+    "freeze",
+    briefPath,
+    "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI treats modal publishing prohibitions as non-affirmative", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `## Goal
+The package may not be published.
 ## Files
 - src/index.js
 ## Validation
