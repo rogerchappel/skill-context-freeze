@@ -48,9 +48,11 @@ console.log(renderMarkdown(packet));
 The parser is intentionally conservative and looks for known ATX headings at
 levels 1 through 6 and checklist language. Following CommonMark, ATX headings
 may have zero to three leading spaces; headings with four leading spaces or a
-leading tab are treated as indented code and ignored. Content under an unknown
-heading is left out of structured packet fields rather than treated as a
-constraint. Fenced code blocks and
+leading tab are treated as indented code and ignored. A trailing ATX closing
+sequence must be separated from the heading text by whitespace, so
+`## Constraints#` is not a `constraints` alias. Content under an unknown heading
+is left out of structured packet fields rather than treated as a constraint.
+Fenced code blocks and
 four-space or tab-indented code examples are ignored by both section parsing
 and warning detection.
 
@@ -88,8 +90,9 @@ but do not suppress warnings or count as sufficient evidence.
 The parser does not infer hidden project policy or read external systems.
 Fenced code blocks follow CommonMark opener rules: a backtick fence whose info
 string contains a backtick is not a fence and remains visible instruction text.
-Valid backtick fences and tilde fences (whose info strings may contain
-backticks) are ignored as examples.
+Fence markers may have zero to three leading spaces, but not a leading tab.
+Valid backtick fences and tilde fences (whose info strings may contain backticks)
+are ignored as examples.
 
 ## Safety Notes
 
