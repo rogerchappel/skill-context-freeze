@@ -50,9 +50,10 @@ export function parseMarkdown(markdown) {
   const sections = {};
   let current = "goal";
   for (const rawLine of visibleMarkdownLines(markdown)) {
-    const heading = rawLine.match(/^ {0,3}#{1,6}\s+(.+?)\s*$/);
+    const heading = rawLine.match(/^ {0,3}#{1,6}(?:[ \t]+(.*?)[ \t]*|[ \t]*)$/);
     if (heading) {
-      current = resolveSection(heading[1]);
+      const headingText = (heading[1] ?? "").replace(/[ \t]+#+[ \t]*$/, "");
+      current = resolveSection(headingText);
       if (current) sections[current] = sections[current] ?? [];
       continue;
     }
@@ -97,6 +98,7 @@ export function renderMarkdown(packet) {
 }
 
 function resolveSection(value) {
+  if (String(value).includes("#")) return null;
   const normalized = normalize(value);
   for (const [key, aliases] of Object.entries(SECTION_ALIASES)) {
     if (aliases.some((alias) => normalize(alias) === normalized)) return key;
@@ -122,7 +124,7 @@ function visibleMarkdownLines(markdown) {
   let fence = null;
 
   for (const line of String(markdown).split(/\r?\n/)) {
-    const marker = line.match(/^[ \t]{0,3}(`{3,}|~{3,})(.*)$/);
+    const marker = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
     if (marker) {
       const character = marker[1][0];
       if (!fence) {
