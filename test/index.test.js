@@ -170,6 +170,35 @@ Review the brief.
   assert.ok(!packet.warnings.includes("Review remote write language before execution."));
 });
 
+test("does not let a tab-indented pseudo-fence hide visible instructions", () => {
+  const markdown = `# Goal
+Review the brief.
+
+	\`\`\`md
+## Constraints
+- Deploy the site.
+\`\`\`
+`;
+  const parsed = parseMarkdown(markdown);
+  const packet = createFreezePacket(markdown);
+
+  assert.deepEqual(parsed.constraints, ["Deploy the site."]);
+  assert.match(packet.warnings.join("\n"), /remote write/);
+});
+
+test("rejects section aliases with an attached trailing hash", () => {
+  const parsed = parseMarkdown(`# Goal
+Review the brief.
+
+## Constraints#
+- Never publish packages.
+
+## Constraints ##
+- Keep work local.`);
+
+  assert.deepEqual(parsed.constraints, ["Keep work local."]);
+});
+
 test("does not map unknown headings into constraints", () => {
   const parsed = parseMarkdown(`# Goal
 Review context.
@@ -462,6 +491,46 @@ test("basic CLI smoke omits a warning for its publish prohibition", () => {
   ], { encoding: "utf8" });
   const packet = JSON.parse(output);
   assert.doesNotMatch(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI keeps instructions after a tab-indented pseudo-fence visible", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `# Goal
+Review the brief.
+
+\t\`\`\`md
+## Constraints
+- Deploy the site.
+\`\`\`
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js", "freeze", briefPath, "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.deepEqual(packet.constraints, ["Deploy the site."]);
+  assert.match(packet.warnings.join("\n"), /remote write/);
+});
+
+test("CLI rejects an alias with an attached trailing hash", () => {
+  const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+  const briefPath = join(directory, "brief.md");
+  writeFileSync(briefPath, `# Goal
+Review the brief.
+## Constraints#
+- Never publish packages.
+## Constraints ##
+- Keep work local.
+`);
+
+  const output = execFileSync(process.execPath, [
+    "bin/skill-context-freeze.js", "freeze", briefPath, "--json"
+  ], { encoding: "utf8" });
+  const packet = JSON.parse(output);
+
+  assert.deepEqual(packet.constraints, ["Keep work local."]);
 });
 
 test("CLI treats passive publishing prohibitions as non-affirmative", () => {
