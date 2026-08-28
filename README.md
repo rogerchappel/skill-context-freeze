@@ -61,7 +61,8 @@ continuous forms of supported messaging, remote-write, filesystem, and live-
 connector actions. They distinguish explicit prohibitions (for example, “Do
 not publish packages”, “You may not publish packages”, “Packages may not be
 published”, “Publishing packages is prohibited”, “Publishing
-packages is not allowed/permitted”, or “Publishing isn't allowed/permitted”)
+packages is not allowed/permitted”, “Publishing isn't allowed/permitted”,
+“Avoid publishing packages”, or “Refrain from publishing packages”)
 from affirmative
 instructions. A clause that actually asks for a recognized side effect still
 produces a review warning, including when it follows a prohibition in the same
