@@ -170,6 +170,29 @@ Review the brief.
   assert.ok(!packet.warnings.includes("Review remote write language before execution."));
 });
 
+test("keeps marker-like lines with info text inside backtick and tilde fences", () => {
+  for (const marker of ["```", "~~~"]) {
+    const markdown = `# Goal
+Review the brief.
+
+${marker}md
+## Constraints
+- Keep the first example hidden.
+${marker}not-a-closer
+- Publish hidden packages.
+${marker}   \t
+
+## Constraints
+- Keep verification manual.
+`;
+    const parsed = parseMarkdown(markdown);
+    const packet = createFreezePacket(markdown);
+
+    assert.deepEqual(parsed.constraints, ["Keep verification manual."]);
+    assert.ok(!packet.warnings.includes("Review remote write language before execution."));
+  }
+});
+
 test("does not let a tab-indented pseudo-fence hide visible instructions", () => {
   const markdown = `# Goal
 Review the brief.
@@ -697,6 +720,36 @@ Review the brief.
 
   assert.deepEqual(packet.constraints, ["Publish packages."]);
   assert.ok(packet.warnings.includes("Review remote write language before execution."));
+});
+
+test("CLI ignores risky instructions after backtick and tilde pseudo-closers", () => {
+  for (const marker of ["```", "~~~"]) {
+    const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+    const briefPath = join(directory, "brief.md");
+    writeFileSync(briefPath, `# Goal
+Review the brief.
+
+${marker}md
+${marker}javascript
+## Constraints
+- Publish hidden packages.
+${marker}
+
+## Constraints
+- Keep verification manual.
+`);
+
+    const output = execFileSync(process.execPath, [
+      "bin/skill-context-freeze.js",
+      "freeze",
+      briefPath,
+      "--json"
+    ], { encoding: "utf8" });
+    const packet = JSON.parse(output);
+
+    assert.deepEqual(packet.constraints, ["Keep verification manual."]);
+    assert.ok(!packet.warnings.includes("Review remote write language before execution."));
+  }
 });
 
 test("CLI warns for risky metadata merged with safe Markdown", () => {
