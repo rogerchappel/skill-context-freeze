@@ -92,6 +92,9 @@ The parser does not infer hidden project policy or read external systems.
 Fenced code blocks follow CommonMark opener rules: a backtick fence whose info
 string contains a backtick is not a fence and remains visible instruction text.
 Fence markers may have zero to three leading spaces, but not a leading tab.
+Closing fences must use the same marker character at least as many times as the
+opener, followed only by spaces or tabs; a marker-like line with info text stays
+inside the code block.
 Valid backtick fences and tilde fences (whose info strings may contain backticks)
 are ignored as examples.
 
