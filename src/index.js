@@ -130,7 +130,11 @@ function visibleMarkdownLines(markdown) {
       if (!fence) {
         const validOpener = character === "~" || !marker[2].includes("`");
         if (validOpener) fence = { character, length: marker[1].length };
-      } else if (character === fence.character && marker[1].length >= fence.length) {
+      } else if (
+        character === fence.character
+        && marker[1].length >= fence.length
+        && /^[ \t]*$/.test(marker[2])
+      ) {
         fence = null;
       }
       if (fence || !marker[2].includes("`")) continue;
