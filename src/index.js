@@ -150,7 +150,7 @@ function hasAffirmativeRisk(line, pattern) {
   const clauses = line.split(/[.,;]|\b(?:but|however|then|yet)\b/i);
   return clauses.some((clause) => {
     if (!pattern.test(clause)) return false;
-    return !/\b(?:do\s+not|don't|never|may(?:\s+not|n't)|must(?:\s+not|n't)|should(?:\s+not|n't)|cannot|can't|no)\b/i.test(clause)
+    return !/\b(?:do\s+not|don't|never|may(?:\s+not|n't)|must(?:\s+not|n't)|should(?:\s+not|n't)|cannot|can't)\b/i.test(clause)
       && !/\b(?:avoid|refrain\s+from)\b/i.test(clause)
       && !/\b(?:prohibited|forbidden|disallowed)\b/i.test(clause)
       && !/\b(?:(?:is|are|was|were|be|being|been)\s+not|(?:is|are|was|were)n['’]t)\s+(?:allowed|permitted)\b/i.test(clause);
