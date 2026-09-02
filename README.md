@@ -66,7 +66,9 @@ packages is not allowed/permitted”, “Publishing isn't allowed/permitted”,
 from affirmative
 instructions. A clause that actually asks for a recognized side effect still
 produces a review warning, including when it follows a prohibition in the same
-sentence.
+sentence. A standalone “no” that modifies an action detail does not negate the
+action: for example, “Publish the package with no preview” still produces a
+remote-write warning.
 
 Warning analysis scans the merged `goal`, `constraints`, and `assumptions`
 fields from both Markdown and metadata because those fields can contain
