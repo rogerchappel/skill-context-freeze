@@ -258,6 +258,27 @@ Do not publish the package, but deploy the documentation.
   assert.match(mixed.warnings.join("\n"), /remote write/);
 });
 
+test("scopes unrelated no phrases to their objects instead of the risky action", () => {
+  for (const [instruction, warning] of [
+    ["Publish the package with no preview.", "remote write"],
+    ["Send an email with no draft.", "external message"]
+  ]) {
+    const packet = createFreezePacket(`## Goal\n${instruction}`, {
+      files: ["src/index.js"],
+      validation: ["npm test"]
+    });
+
+    assert.match(packet.warnings.join("\n"), new RegExp(warning), instruction);
+    assert.match(packet.warnings.join("\n"), /no approval evidence matching/i, instruction);
+  }
+
+  const prohibited = createFreezePacket("## Goal\nDo not publish packages.", {
+    files: ["src/index.js"],
+    validation: ["npm test"]
+  });
+  assert.doesNotMatch(prohibited.warnings.join("\n"), /remote write/);
+});
+
 test("recognizes common grammatical forms for every action risk category", () => {
   for (const [instruction, warning] of [
     ["Send the update.", "external message"],
@@ -797,6 +818,28 @@ Do not publish the package, and deploy the documentation.
 
   assert.match(packet.warnings.join("\n"), /remote write/);
   assert.match(packet.warnings.join("\n"), /no approval evidence/i);
+});
+
+test("CLI warns when no modifies a detail rather than the risky action", () => {
+  for (const [instruction, warning] of [
+    ["Publish the package with no preview.", "remote write"],
+    ["Send an email with no draft.", "external message"]
+  ]) {
+    const directory = mkdtempSync(join(tmpdir(), "skill-context-freeze-"));
+    const briefPath = join(directory, "brief.md");
+    writeFileSync(briefPath, `## Goal\n${instruction}\n## Files\n- src/index.js\n## Validation\n- npm test\n`);
+
+    const output = execFileSync(process.execPath, [
+      "bin/skill-context-freeze.js",
+      "freeze",
+      briefPath,
+      "--json"
+    ], { encoding: "utf8" });
+    const packet = JSON.parse(output);
+
+    assert.match(packet.warnings.join("\n"), new RegExp(warning), instruction);
+    assert.match(packet.warnings.join("\n"), /no approval evidence matching/i, instruction);
+  }
 });
 
 test("CLI distinguishes denied, prohibited, and positive approval metadata", () => {
