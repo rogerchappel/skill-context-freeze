@@ -117,3 +117,9 @@ npm run release:check
 `npm run package:smoke` performs a dry-run npm pack and asserts that the CLI,
 library source, fixture brief, handoff example, skill instructions, changelog,
 license, and security policy are present in the tarball.
+
+## Node.js support
+
+The package requires Node.js 20 or newer. The release-check workflow verifies
+Node.js 20, 22, and 24; other newer releases are not individually covered by
+that matrix.
